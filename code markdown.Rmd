@@ -6,7 +6,7 @@ output:
 ---
 
 ## 0. Required packages
-```{r}
+```{r message=FALSE, include=FALSE}
 library( car )
 library( ellipse )
 library( faraway )
@@ -34,16 +34,13 @@ dim(dati) # 994 osservazioni
 
 # a. Descrittiva
 ```{r}
-#x11()
 par( mfrow = c( 1, 2 ) )
 hist(dati$median_house_value, main = "Histogram" )
 boxplot( dati$median_house_value, main = "Boxplot", pch = 16, col = 'lavender' )
-#migliorare assi
 ```
 
 # b. Pairs
 ```{r}
-#x11()
 pairs(dati[ , c('longitude', 'latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'median_house_value')], pch = 16)
 ```
 
@@ -53,45 +50,21 @@ pairs(dati[ , c('longitude', 'latitude', 'housing_median_age', 'total_rooms', 't
 ```{r}
 g = lm( median_house_value ~ longitude + latitude + housing_median_age + total_rooms + total_bedrooms + population + households + median_income, data = dati )
 summary( g ) # Radj = 0.6424
-vif(g) # longitude           latitude housing_median_age        total_rooms     total_bedrooms         population 
-       # 3.680771           3.599631           2.348495          17.324922         157.402228          14.102432 
-       # households      median_income 
-       # 176.591071           1.899470 
-AIC(g) # 24469.87
-step(g) # dice togli: total rooms, total bedrooms, housing-median-age
+vif(g)
 ```
 
-# b. senza total rooms
-g = lm( median_house_value ~ longitude + latitude + housing_median_age + total_bedrooms + population + households + median_income, data = dati )
-summary( g ) # Radj = 0.6425
-vif(g) # longitude           latitude housing_median_age     total_bedrooms         population         households 
-       # 3.622005           3.512761           2.342108         157.299608           9.616282         174.203925 
-       # median_income 
-       # 1.335929 
-AIC(g) # 24468.52
+```{r}
+v =step(g) 
 
-# c. senza total rooms e total bedrooms
-g = lm( median_house_value ~ longitude + latitude + housing_median_age + population + households + median_income, data = dati )
-summary( g ) # Radj = 0.6427
-vif(g) # longitude           latitude housing_median_age         population         households      median_income 
-       # 3.622004           3.485665           2.299794           9.466305           9.199392           1.234356 
-AIC(g) # 24467
 
-# d. senza total rooms, total bedrooms e housing-median-age
-g = lm( median_house_value ~ longitude + latitude + population + households + median_income, data = dati )
-summary( g ) # Radj = 0.6427
-vif(g) # longitude      latitude    population    households median_income 
-       # 3.379261      3.212722      9.380365      8.724027      1.229353 
-AIC(g) # 24465.94
-
-############################################################################################################################
+# dice togli: total rooms, total bedrooms, housing-median-age
+```
 
 ## 4. tabella di collinearit?
 
 # a. tabella
 ```{r}
 X = dati [ , c(1,2,6,7,8)] #not considering the response variable
-#x11()
 corrplot(cor(X), method='number')
 corrplot(cor(X), method='color')
 ```
@@ -128,7 +101,6 @@ n = dim(dati_2)[1] # n = 994
 watchout_points_lev = lev[ which( lev > 2 * p/n  ) ]
 watchout_ids_lev = seq_along( lev )[ which( lev > 2 * p/n ) ]
 
-#x11()
 plot( g$fitted.values, lev, ylab = "Leverages", main = "Plot of Leverages", 
       pch = 16, col = 'black' )
 
@@ -139,7 +111,6 @@ watchout_ids_lev = seq_along( lev )[ which( lev > 2 * p/n ) ]
 
 points( g$fitted.values[ watchout_ids_lev ], watchout_points_lev, col = 'red', pch = 16 )
 
-lev [ lev >  2 * p / n ]
 sum = sum(   lev >  2 * p / n  ) # 87
 
 # Fit the model without leverages - rimuovo 87 osservazioni
@@ -167,7 +138,6 @@ points( g$fitted.values[watchout_ids_lev],
 legend('topright', col = c('red','orange'), 
        c('Standardized Residuals', 'Leverages'), pch = rep( 16, 2 ), bty = 'n' )
 
-res_std [ abs(res_std) >  2  ]
 sum = sum(  abs(res_std) >  2  ) # 40
 
 # Fit the model without Standardized Residuals - rimuovo 40 osservazioni
@@ -227,7 +197,6 @@ points( g$fitted.values[ watchout_ids_lev ], lev[ watchout_ids_lev ],
         col = 'orange', pch = 16 )
 
 id_to_keep = !( 1:n %in% watchout_ids_Cdist )
-Cdist [ id_to_keep ==  FALSE  ]
 sum = sum(  id_to_keep ==  FALSE  ) # 55
 
 # Fit the model without Standardized Residuals - rimuovo 55 osservazioni
